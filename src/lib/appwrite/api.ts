@@ -1,6 +1,6 @@
 import { ID, Query } from "appwrite";
 
-import { INewUser } from "@/types";
+import { INewPost, INewUser } from "@/types";
 import { account, appwriteConfig, avatars, storage, databases } from "./config";
 //import { Query } from "@tanstack/react-query";
 
@@ -103,11 +103,32 @@ export async function createPost(post: INewPost) {
       deleteFile(uploadedFile.$id);
       throw Error;
     }
+
+    // convert tags into an array
+    const tags = post.tags?.replace(/ /g, "").split(",") || [];
+
+    // save post to database
+    const newPost = await databases.createDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.postCollectionId,
+      ID.unique(),
+      {
+        creator: post.userId,
+        caption: post.caption,
+        imageUrl: fileUrl,
+        imageId: uploadedFile.$id,
+        location: post.location,
+        tags: tags,
+      }
+    );
+    if (!newPost) {
+      await deleteFile(uploadedFile.$id);
+      throw Error;
+    }
+    return newPost;
   } catch (error) {
     console.log(error);
   }
-
-  // convert tags into an array
 }
 
 export async function uploadFile(file: File) {
