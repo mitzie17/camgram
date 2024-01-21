@@ -93,21 +93,22 @@ export async function signOutAccount() {
 
 export async function createPost(post: INewPost) {
   try {
-    // upload image to storage
+    // Upload file to appwrite storage
     const uploadedFile = await uploadFile(post.file[0]);
+
     if (!uploadedFile) throw Error;
 
-    // get file url
+    // Get file url
     const fileUrl = getFilePreview(uploadedFile.$id);
     if (!fileUrl) {
-      deleteFile(uploadedFile.$id);
+      await deleteFile(uploadedFile.$id);
       throw Error;
     }
 
-    // convert tags into an array
+    // Convert tags into array
     const tags = post.tags?.replace(/ /g, "").split(",") || [];
 
-    // save post to database
+    // Create post
     const newPost = await databases.createDocument(
       appwriteConfig.databaseId,
       appwriteConfig.postCollectionId,
@@ -121,10 +122,12 @@ export async function createPost(post: INewPost) {
         tags: tags,
       }
     );
+
     if (!newPost) {
       await deleteFile(uploadedFile.$id);
       throw Error;
     }
+
     return newPost;
   } catch (error) {
     console.log(error);
@@ -144,7 +147,7 @@ export async function uploadFile(file: File) {
   }
 }
 
-export async function getFilePreview(fileId: string) {
+export function getFilePreview(fileId: string) {
   try {
     const fileUrl = storage.getFilePreview(
       appwriteConfig.storageId,
@@ -154,6 +157,7 @@ export async function getFilePreview(fileId: string) {
       "top",
       100
     );
+    if (!fileUrl) throw Error;
     return fileUrl;
   } catch (error) {
     console.log(error);
@@ -164,6 +168,22 @@ export async function deleteFile(fileId: string) {
   try {
     await storage.deleteFile(appwriteConfig.storageId, fileId);
     return { status: "ok" };
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+export async function getRecentPosts() {
+  try {
+    const posts = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.postCollectionId,
+      [Query.orderDesc("$createdAt"), Query.limit(20)]
+    );
+
+    if (!posts) throw Error;
+
+    return posts;
   } catch (error) {
     console.log(error);
   }
