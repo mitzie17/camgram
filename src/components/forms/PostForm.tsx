@@ -19,9 +19,11 @@ import { Models } from "appwrite";
 import { useUserContext } from "@/context/AuthContext";
 import { useToast } from "../ui/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useCreatePost } from "@/lib/react-query/queriesAndMutations";
 
 type PostFormProps = {
   post?: Models.Document;
+  action: "Create" | "Update";
 };
 
 const PostForm = ({ post }: PostFormProps) => {
@@ -29,7 +31,7 @@ const PostForm = ({ post }: PostFormProps) => {
     useCreatePost();
   const { user } = useUserContext();
   const { toast } = useToast();
-  const { navigate } = useNavigate();
+  const navigate = useNavigate();
 
   // 1. Define your form.
   const form = useForm<z.infer<typeof PostValidation>>({
@@ -50,6 +52,7 @@ const PostForm = ({ post }: PostFormProps) => {
       ...values,
       userId: user.id,
     });
+
     if (!newPost) {
       toast({
         title: "Please try again.",
