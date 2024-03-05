@@ -10,7 +10,6 @@ import {
 } from "@/lib/react-query/queriesAndMutations";
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
 
 const Explore = () => {
   const { ref, inView } = useInView();
@@ -36,7 +35,7 @@ const Explore = () => {
   const shouldShowSearchResults = searchValue !== "";
   const shouldShowPosts =
     !shouldShowSearchResults &&
-    posts.pages.every((item) => item.documents.length === 0);
+    posts.pages.every((item) => item?.documents.length === 0);
 
   return (
     <div className="explore-container">
